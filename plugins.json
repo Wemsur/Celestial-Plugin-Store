@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "plugins": [
+    {
+      "id": "com.example.seed-viewer",
+      "name": "种子查看器",
+      "description": "…",
+      "author": "…",
+      "version": "1.0.0",
+      "repo": "https://github.com/someone/seed-viewer",
+      "download": "https://github.com/someone/seed-viewer/releases/latest/download/plugin.zip",
+      "tags": ["工具"]
+    }
+  ]
+}
