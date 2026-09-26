@@ -13,6 +13,19 @@
         "联机",
         "工具"
       ]
+    },
+    {
+      "id": "cn.hitokoto.celestial",
+      "name": "一言",
+      "description": "为Celestial Launcher主页添加间隔刷新的一言",
+      "author": "Celestial",
+      "github": "Wemsur/celestial-hitokoto",
+      "repo": "https://github.com/Wemsur/celestial-hitokoto",
+      "download": "https://github.com/Wemsur/celestial-hitokoto/releases/latest/download/celestial-hitokoto.zip",
+      "tags": [
+        "美化",
+        "主页"
+      ]
     }
   ]
 }
