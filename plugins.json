@@ -4,9 +4,9 @@
     {
       "id": "com.example.seed-viewer",
       "name": "种子查看器",
-      "description": "…",
-      "author": "…",
-      "version": "1.0.0",
+      "description": "示例条目：展示字段格式，可在收到第一个真实插件后删除。",
+      "author": "someone",
+      "github": "someone/seed-viewer",
       "repo": "https://github.com/someone/seed-viewer",
       "download": "https://github.com/someone/seed-viewer/releases/latest/download/plugin.zip",
       "tags": ["工具"]

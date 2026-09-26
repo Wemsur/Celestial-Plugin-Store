@@ -1,0 +1,65 @@
+name: 提交插件
+description: 把你的插件加入 Celestial 插件商店（机器人会转成 PR）
+title: "[插件] "
+labels: ["plugin-submission"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢提交插件！请如实填写下面的字段。提交后机器人会自动生成一个修改 `plugins.json`
+        的 PR，维护者审核后合并。若信息有误，机器人会在下方留言指出，编辑本 Issue 即可重试。
+
+        前置条件：插件托管在 GitHub、已发布 Release，且 tag 命名为 `x.x.x` 或 `vx.x.x`。
+  - type: input
+    id: id
+    attributes:
+      label: 插件 id
+      description: 必须和你 manifest.json 里的 id 完全一致。
+      placeholder: com.example.terracotta
+    validations:
+      required: true
+  - type: input
+    id: name
+    attributes:
+      label: 插件名称
+      placeholder: 陶瓦联机
+    validations:
+      required: true
+  - type: input
+    id: github
+    attributes:
+      label: 仓库（owner/repo）
+      description: 你插件所在的 GitHub 仓库，格式 owner/repo。用于自动检测最新 Release。
+      placeholder: Wemsur/terracotta-plugin
+    validations:
+      required: true
+  - type: input
+    id: download
+    attributes:
+      label: 下载直链
+      description: 指向打包 zip 的 https 直链。推荐用「永远指向最新 Release」的重定向直链。
+      placeholder: https://github.com/Wemsur/terracotta-plugin/releases/latest/download/terracotta.zip
+    validations:
+      required: true
+  - type: input
+    id: author
+    attributes:
+      label: 作者
+      placeholder: 你的名字
+    validations:
+      required: false
+  - type: textarea
+    id: description
+    attributes:
+      label: 简介
+      description: 一句话说明插件是做什么的。
+    validations:
+      required: false
+  - type: input
+    id: tags
+    attributes:
+      label: 标签
+      description: 逗号分隔，例如：联机, 工具
+      placeholder: 联机
+    validations:
+      required: false

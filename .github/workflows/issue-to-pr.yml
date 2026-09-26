@@ -1,0 +1,128 @@
+# 把「提交插件」Issue 自动转成修改 plugins.json 的 PR。
+#
+# 前置设置（仓库 Settings → Actions → General）：
+#   勾选 "Allow GitHub Actions to create and approve pull requests"，
+#   否则最后创建 PR 的一步会因权限被拒。
+name: Issue 转 PR
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  submit:
+    # 只处理带 plugin-submission 标签的 Issue（提交插件表单会自动打上）。
+    if: contains(github.event.issue.labels.*.name, 'plugin-submission')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 解析 Issue 表单
+        id: parse
+        uses: stefanbuck/github-issue-parser@v3
+        with:
+          template-path: .github/ISSUE_TEMPLATE/submit-plugin.yml
+
+      - name: 校验并写入 plugins.json
+        id: build
+        uses: actions/github-script@v7
+        env:
+          PARSED: ${{ steps.parse.outputs.jsonString }}
+        with:
+          script: |
+            const fs = require('fs')
+            const data = JSON.parse(process.env.PARSED || '{}')
+            const clean = (value) => {
+              const text = (value ?? '').toString().trim()
+              return !text || text === '_No response_' ? '' : text
+            }
+
+            const id = clean(data.id)
+            const name = clean(data.name)
+            const repoSlug = clean(data.github)
+            const download = clean(data.download)
+            const author = clean(data.author)
+            const description = clean(data.description)
+            const tags = clean(data.tags)
+              .split(/[,，]/)
+              .map((tag) => tag.trim())
+              .filter(Boolean)
+
+            const errors = []
+            if (!id) errors.push('缺少插件 id')
+            if (!name) errors.push('缺少插件名称')
+            if (!/^[^/\s]+\/[^/\s]+$/.test(repoSlug)) errors.push('仓库需为 `owner/repo` 格式')
+            if (!/^https:\/\//i.test(download)) errors.push('下载直链必须是 https 链接')
+
+            if (errors.length > 0) {
+              core.setOutput('valid', 'false')
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: [
+                  '这个提交暂时没法自动处理，请修正后编辑本 Issue 重试：',
+                  '',
+                  ...errors.map((error) => `- ${error}`),
+                ].join('\n'),
+              })
+              return
+            }
+
+            const entry = { id, name }
+            if (description) entry.description = description
+            if (author) entry.author = author
+            entry.github = repoSlug
+            entry.repo = `https://github.com/${repoSlug}`
+            entry.download = download
+            if (tags.length > 0) entry.tags = tags
+
+            const registry = JSON.parse(fs.readFileSync('plugins.json', 'utf8'))
+            if (!Array.isArray(registry.plugins)) registry.plugins = []
+            const index = registry.plugins.findIndex((plugin) => plugin.id === id)
+            const action = index >= 0 ? 'update' : 'add'
+            if (index >= 0) registry.plugins[index] = entry
+            else registry.plugins.push(entry)
+
+            fs.writeFileSync('plugins.json', JSON.stringify(registry, null, 2) + '\n')
+
+            core.setOutput('valid', 'true')
+            core.setOutput('action', action)
+            core.setOutput('id', id)
+            core.setOutput('name', name)
+
+      - name: 创建 PR
+        if: steps.build.outputs.valid == 'true'
+        id: pr
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "插件：${{ steps.build.outputs.id }}"
+          branch: plugin-submission/issue-${{ github.event.issue.number }}
+          delete-branch: true
+          title: "插件：${{ steps.build.outputs.name }}（#${{ github.event.issue.number }}）"
+          body: |
+            由 #${{ github.event.issue.number }} 自动生成（操作：${{ steps.build.outputs.action }}）。
+
+            合并后将自动关闭该 Issue。
+
+            Closes #${{ github.event.issue.number }}
+          labels: plugin-submission
+
+      - name: 回帖 PR 链接
+        if: steps.build.outputs.valid == 'true' && steps.pr.outputs.pull-request-url
+        uses: actions/github-script@v7
+        env:
+          PR_URL: ${{ steps.pr.outputs.pull-request-url }}
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `已生成 PR：${process.env.PR_URL} ，等待维护者审核合并。`,
+            })
