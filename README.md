@@ -1,6 +1,6 @@
 # Celestial Plugin Store
 
-Celestial Launcher（灵霄启动器）的插件商店索引。启动器读取本仓库 `main` 分支根目录的
+Celestial Launcher 的插件商店索引。启动器读取本仓库 `main` 分支根目录的
 `plugins.json`，把里面的条目渲染成可安装列表。
 
 索引只是**指向下载地址的清单**，不包含也不执行任何插件代码。用户安装时，启动器仍会重新
