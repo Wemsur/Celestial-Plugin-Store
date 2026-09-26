@@ -1,5 +1,18 @@
 {
   "version": 1,
   "plugins": [
+    {
+      "id": "cn.terracotta.celestial",
+      "name": "陶瓦联机",
+      "description": "Celestial 官方陶瓦联机插件",
+      "author": "Celestial",
+      "github": "Wemsur/celestial-terracotta",
+      "repo": "https://github.com/Wemsur/celestial-terracotta",
+      "download": "https://github.com/Wemsur/celestial-terracotta/releases/latest/download/celestial-terracotta.zip",
+      "tags": [
+        "联机",
+        "工具"
+      ]
+    }
   ]
 }
