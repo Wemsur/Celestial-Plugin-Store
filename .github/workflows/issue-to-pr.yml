@@ -16,8 +16,10 @@ permissions:
 
 jobs:
   submit:
-    # 只处理带 plugin-submission 标签的 Issue（提交插件表单会自动打上）。
-    if: contains(github.event.issue.labels.*.name, 'plugin-submission')
+    # 只处理提交插件表单开的 Issue。用标题前缀判断而不是标签：issue 表单声明的
+    # 标签只有在仓库已存在该标签时才会被自动打上，新仓库里会静默跳过，靠它做守卫
+    # 会导致 job 被 skip。表单把标题预填为 "[插件] "，据此判断更可靠。
+    if: startsWith(github.event.issue.title, '[插件]')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
