@@ -1,0 +1,23 @@
+{
+	"id": "example",
+	"name": "示例内容站",
+	"version": "0.1.0",
+	"description": "把示例站的内容接入 Celestial Launcher。",
+	"author": "你的名字",
+	"icon": "icon.png",
+	"color": "#4a90d9",
+	"detail_format": "markdown",
+	"api_version": 1,
+	"entry": "dist/index.js",
+	"content_types": ["mod"],
+	"capabilities": {
+		"search": true,
+		"browse": true,
+		"detail": true,
+		"versions": true,
+		"resolve_download": true,
+		"update_check": false
+	},
+	"hosts": ["example.com"],
+	"settings": []
+}

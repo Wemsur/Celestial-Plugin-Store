@@ -1,8 +1,12 @@
-# 把「提交插件」Issue 自动转成修改 plugins.json 的 PR。
+# 把「提交插件」/「提交内容源」Issue 自动转成修改索引文件的 PR。
 #
 # 前置设置（仓库 Settings → Actions → General）：
 #   勾选 "Allow GitHub Actions to create and approve pull requests"，
 #   否则最后创建 PR 的一步会因权限被拒。
+#
+# 两个 job 各管一种提交，靠 Issue 标题前缀区分：
+#   [插件]   → plugins.json       （表单 submit-plugin.yml）
+#   [内容源] → content-sources.json（表单 submit-content-source.yml）
 name: Issue 转 PR
 
 on:
@@ -114,6 +118,142 @@ jobs:
 
             Closes #${{ github.event.issue.number }}
           labels: plugin-submission
+
+      - name: 回帖 PR 链接
+        if: steps.build.outputs.valid == 'true' && steps.pr.outputs.pull-request-url
+        uses: actions/github-script@v7
+        env:
+          PR_URL: ${{ steps.pr.outputs.pull-request-url }}
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `已生成 PR：${process.env.PR_URL} ，等待维护者审核合并。`,
+            })
+
+  # 内容源走同一套流程，只是写的是 content-sources.json，并且多一个「提供哪些内容
+  # 类型」的字段。两个 job 各自用标题前缀把守，互不干扰。
+  submit-source:
+    if: startsWith(github.event.issue.title, '[内容源]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 解析 Issue 表单
+        id: parse
+        uses: stefanbuck/github-issue-parser@v3
+        with:
+          template-path: .github/ISSUE_TEMPLATE/submit-content-source.yml
+
+      - name: 校验并写入 content-sources.json
+        id: build
+        uses: actions/github-script@v7
+        env:
+          PARSED: ${{ steps.parse.outputs.jsonString }}
+        with:
+          script: |
+            const fs = require('fs')
+            const data = JSON.parse(process.env.PARSED || '{}')
+            const clean = (value) => {
+              const text = (value ?? '').toString().trim()
+              return !text || text === '_No response_' ? '' : text
+            }
+
+            // The launcher's closed vocabulary for a source's content types. A
+            // value outside it would name a tab the launcher does not have, so an
+            // unknown one is reported rather than stored.
+            const ALLOWED_TYPES = [
+              'mod', 'modpack', 'resourcepack', 'shader', 'datapack', 'world', 'skin',
+            ]
+
+            const id = clean(data.id)
+            const name = clean(data.name)
+            const repoSlug = clean(data.github)
+            const download = clean(data.download)
+            const author = clean(data.author)
+            const description = clean(data.description)
+            const tags = clean(data.tags)
+              .split(/[,，]/)
+              .map((tag) => tag.trim())
+              .filter(Boolean)
+
+            // A multi-select dropdown arrives as one comma-separated string; a
+            // single choice arrives bare. Splitting handles both.
+            const rawTypes = clean(data.contentTypes)
+              .split(/[,，]/)
+              .map((type) => type.trim())
+              .filter(Boolean)
+            const contentTypes = [...new Set(rawTypes.filter((t) => ALLOWED_TYPES.includes(t)))]
+            const unknownTypes = [...new Set(rawTypes.filter((t) => !ALLOWED_TYPES.includes(t)))]
+
+            const errors = []
+            if (!id) errors.push('缺少内容源 id')
+            if (!name) errors.push('缺少内容源名称')
+            if (!/^[^/\s]+\/[^/\s]+$/.test(repoSlug)) errors.push('仓库需为 `owner/repo` 格式')
+            if (!/^https:\/\//i.test(download)) errors.push('下载直链必须是 https 链接')
+            if (contentTypes.length === 0) {
+              errors.push('至少要选一个内容类型（' + ALLOWED_TYPES.join('、') + '）')
+            }
+            if (unknownTypes.length > 0) {
+              errors.push('不认识的内容类型：' + unknownTypes.join('、'))
+            }
+
+            if (errors.length > 0) {
+              core.setOutput('valid', 'false')
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: [
+                  '这个提交暂时没法自动处理，请修正后编辑本 Issue 重试：',
+                  '',
+                  ...errors.map((error) => `- ${error}`),
+                ].join('\n'),
+              })
+              return
+            }
+
+            const entry = { id, name }
+            if (description) entry.description = description
+            if (author) entry.author = author
+            entry.github = repoSlug
+            entry.repo = `https://github.com/${repoSlug}`
+            entry.download = download
+            entry.contentTypes = contentTypes
+            if (tags.length > 0) entry.tags = tags
+
+            const registry = JSON.parse(fs.readFileSync('content-sources.json', 'utf8'))
+            if (!Array.isArray(registry.sources)) registry.sources = []
+            const index = registry.sources.findIndex((source) => source.id === id)
+            const action = index >= 0 ? 'update' : 'add'
+            if (index >= 0) registry.sources[index] = entry
+            else registry.sources.push(entry)
+
+            fs.writeFileSync('content-sources.json', JSON.stringify(registry, null, 2) + '\n')
+
+            core.setOutput('valid', 'true')
+            core.setOutput('action', action)
+            core.setOutput('id', id)
+            core.setOutput('name', name)
+
+      - name: 创建 PR
+        if: steps.build.outputs.valid == 'true'
+        id: pr
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "内容源：${{ steps.build.outputs.id }}"
+          branch: content-source-submission/issue-${{ github.event.issue.number }}
+          delete-branch: true
+          title: "内容源：${{ steps.build.outputs.name }}（#${{ github.event.issue.number }}）"
+          body: |
+            由 #${{ github.event.issue.number }} 自动生成（操作：${{ steps.build.outputs.action }}）。
+
+            合并后将自动关闭该 Issue。
+
+            Closes #${{ github.event.issue.number }}
+          labels: content-source-submission
 
       - name: 回帖 PR 链接
         if: steps.build.outputs.valid == 'true' && steps.pr.outputs.pull-request-url

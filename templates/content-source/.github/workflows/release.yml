@@ -1,0 +1,67 @@
+name: Release
+
+# 打 tag（v*）时构建并把插件打包成一个 zip 挂到 Release。
+# 资产名固定为 <id>.zip —— 不带版本号，商店索引里那条 download 才永远有效。
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm typecheck
+
+      - name: 校验 tag 与 manifest 版本一致
+        # 启动器拿「最新 Release 的 tag」和 manifest 里的 version 比较来判断更新。
+        # 两者不一致会导致用户永远被提示有更新（或永远收不到），所以在这里拦住。
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          manifest_version=$(node -p "require('./manifest.json').version")
+          tag="${GITHUB_REF_NAME#v}"
+          if [ "$manifest_version" != "$tag" ]; then
+            echo "::error::tag 是 v$tag，但 manifest.json 里写的是 $manifest_version"
+            exit 1
+          fi
+
+      - name: 打包
+        run: |
+          id=$(node -p "require('./manifest.json').id")
+          icon=$(node -p "require('./manifest.json').icon || ''")
+          test -f dist/index.js || { echo "::error::没有构建出 dist/index.js"; exit 1; }
+          files="manifest.json dist"
+          if [ -n "$icon" ]; then
+            test -f "$icon" || { echo "::error::manifest 声明了图标 $icon，但文件不存在"; exit 1; }
+            files="$files $icon"
+          fi
+          zip -qr "$id.zip" $files
+          echo "打包完成：$id.zip"
+
+      - uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: '*.zip'
+          generate_release_notes: true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: plugin-zip
+          path: '*.zip'

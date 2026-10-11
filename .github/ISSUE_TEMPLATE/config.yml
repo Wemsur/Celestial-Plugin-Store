@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
-  - name: 提交插件说明
+  - name: 提交说明（插件 / 内容源）
     url: https://github.com/Wemsur/Celestial-Plugin-Store/blob/main/README.md
     about: 提交前请先阅读字段说明与 tag 命名规范。

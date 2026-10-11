@@ -1,0 +1,49 @@
+# 检查插件仓库里的类型副本是否过期（可复用工作流）。
+#
+# 内容源的权威类型是本仓库的 sdk/index.d.ts。插件仓库各自带一份副本，只服务编辑器和
+# 类型检查——构建产物里不含它（类型导入会被抹掉）。副本会过期，所以由这个工作流兜住：
+# 拉一次权威文件，和插件仓库里的副本逐字节比对，不一致就失败。
+#
+# 插件仓库这样调用：
+#
+#   jobs:
+#     sdk-drift:
+#       uses: Wemsur/Celestial-Plugin-Store/.github/workflows/check-sdk-drift.yml@main
+#
+name: 检查 SDK 副本
+
+on:
+  workflow_call:
+    inputs:
+      path:
+        description: 仓库里副本的路径
+        type: string
+        required: false
+        default: types/content-source.d.ts
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 拉取权威类型
+        run: |
+          curl -fsSL \
+            "https://raw.githubusercontent.com/Wemsur/Celestial-Plugin-Store/main/sdk/index.d.ts" \
+            -o "$RUNNER_TEMP/canonical.d.ts"
+
+      - name: 与仓库里的副本比对
+        run: |
+          path="${{ inputs.path }}"
+          if [ ! -f "$path" ]; then
+            echo "::error::找不到 $path"
+            exit 1
+          fi
+          if diff -u "$RUNNER_TEMP/canonical.d.ts" "$path"; then
+            echo "类型副本与权威定义一致"
+            exit 0
+          fi
+          echo "::error::$path 与商店仓库的 sdk/index.d.ts 不一致。上面的 diff 里，'-' 开头的是权威类型，'+' 开头的是本仓库的副本。重新同步："
+          echo "::error::curl -fsSL https://raw.githubusercontent.com/Wemsur/Celestial-Plugin-Store/main/sdk/index.d.ts -o $path"
+          exit 1

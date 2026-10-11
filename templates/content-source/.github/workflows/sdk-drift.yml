@@ -1,0 +1,14 @@
+# 类型副本一致性检查
+#
+# 权威类型在商店仓库的 sdk/index.d.ts，本仓库的副本由这里兜住不漂移。
+
+name: SDK 副本
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  sdk-drift:
+    uses: Wemsur/Celestial-Plugin-Store/.github/workflows/check-sdk-drift.yml@main
