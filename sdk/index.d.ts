@@ -44,9 +44,9 @@ declare module '@celestial/content-source' {
 		/** A version list for a project. */
 		versions: boolean
 		/** Produce a fetchable file for a project/version. */
-		resolveDownload: boolean
+		resolve_download: boolean
 		/** Given installed items, report whether newer versions exist. */
-		updateCheck: boolean
+		update_check: boolean
 	}
 
 	/**

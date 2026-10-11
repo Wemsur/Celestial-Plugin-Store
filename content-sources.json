@@ -1,4 +1,21 @@
 {
   "version": 1,
-  "sources": []
+  "sources": [
+    {
+      "id": "mcmod",
+      "name": "MC百科",
+      "description": "MC百科（mcmod.cn）的模组与整合包。中文条目、中文简介、按元素分类与官方状态筛选，正文与站外链接一并读取。仅提供浏览与检索：站点的下载需要人工通过验证码，所以不做安装。",
+      "author": "Celestial",
+      "github": "Wemsur/celestial-content-mcmod",
+      "repo": "https://github.com/Wemsur/celestial-content-mcmod",
+      "download": "https://github.com/Wemsur/celestial-content-mcmod/releases/latest/download/mcmod.zip",
+      "contentTypes": [
+        "mod",
+        "modpack"
+      ],
+      "tags": [
+        "官方"
+      ]
+    }
+  ]
 }
