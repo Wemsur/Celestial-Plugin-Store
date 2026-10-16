@@ -115,7 +115,8 @@ export async function activate(api: ContentSourceApi) {
 ```
 
 只实现 `capabilities` 里声明为 `true` 的方法。声明 `false` 的能力启动器不会调用，对应的界面
-会降级显示（比如没有 `resolve_download`，安装按钮就是不可用的，而不是点了报错）。
+会降级显示（比如 `resolve_download` 和 `open_download` 都没有，安装按钮就是不可用的，
+而不是点了报错）。
 
 ## 网络
 

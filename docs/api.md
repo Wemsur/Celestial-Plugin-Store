@@ -150,12 +150,19 @@ async detail(id: string, contentType: ContentType): Promise<ContentProject>
   body?: string                                  // 正文，按 manifest 的 detail_format 渲染
   gallery?: { url: string; title?: string }[]
   license?: string
-  links?: { label: string; url: string }[]
+  links?: { label: string; url: string }[]       // 相关链接（详见下）
   versions?: ContentVersion[]
 }
 ```
 
 `body` 是 Markdown（默认）或纯文本，由启动器渲染并消毒。
+
+`links` 是条目的站外链接。**如果其中一条指向 CurseForge 或 Modrinth 的项目页**
+（形如 `https://www.curseforge.com/minecraft/modpacks/<slug>` 或
+`https://modrinth.com/mod/<slug>`），且用户装了对应的内容源，启动器会把这条链接**变成
+站内跳转**——直接打开那个源的对应项目页，用户可以在那里安装。这用在"你只是收录、真正的文件
+在别的源"的情况：你只要把页面上本来就有的那个 URL 放进 `links`，不必知道对方的安装方式。
+指向别处的链接（网盘、Discord、wiki）照常当外链打开。
 
 ## `versions(id, request)`
 
@@ -196,6 +203,26 @@ async resolveDownload(id: string, versionId?: string, fileId?: string): Promise<
 
 **你只给地址，不碰文件。** 下载、校验、放到哪个文件夹、怎么覆盖，全部由启动器按内容类型
 决定。`fileId` 是用户在 `versions()` 返回的 `files` 里挑的那个。
+
+## `openDownload(id, versionId?, fileId?)`
+
+```ts
+async openDownload(id: string, versionId?: string, fileId?: string): Promise<{ url: string; fileName?: string }>
+```
+
+给一个**网页**地址，而不是文件直链。用在文件没法直接下的时候——比如站点下载要先过验证码、
+或者要登录，只有浏览器能过。启动器会开一个窗口加载这个页面，用户自己在里面下载；用户下到的
+文件被启动器捕获、放进暂存目录，再按内容类型装好。
+
+```ts
+async openDownload(id: string): Promise<{ url: string; fileName?: string }> {
+  // url 的 host 必须在你 manifest 的 hosts 里，否则启动器拒绝开窗
+  return { url: `https://example.com/download/${id}.html`, fileName: 'some-mod.jar' }
+}
+```
+
+**不要试图绕过验证码。** 这个方法的全部意义就是把用户送到站点自己的页面上，让他在那里
+完成站点要求他做的事；插件只负责指路。`fileName` 只决定暂存文件叫什么，不影响安装位置。
 
 ## `filters(contentType)`
 

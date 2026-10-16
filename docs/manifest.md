@@ -31,6 +31,7 @@
   "detail": true,
   "versions": true,
   "resolve_download": true,
+  "open_download": false,
   "update_check": false
 }
 ```
@@ -42,7 +43,10 @@
 | `detail` | `detail(id)` | 点进去没有详情页内容 |
 | `versions` | `versions(id, request)` | 版本标签页不显示 |
 | `resolve_download` | `resolveDownload(id, versionId?, fileId?)` | **安装按钮不可用** |
+| `open_download` | `openDownload(id, versionId?, fileId?)` | **安装按钮不可用** |
 | `update_check` | `checkUpdate(items)` | 不参与更新检查 |
+
+`resolve_download` 和 `open_download` 都是"能装东西"，但走的路不同：前者你直接给出一个文件 URL，启动器自己下载；后者你给出一个**网页**地址，启动器开一个窗口让用户自己下载（比如站点下载要过验证码），再把用户下到的文件捕获下来安装。至少要有一个，安装按钮才可用；两个都实现时优先用 `resolve_download`。
 
 声明 `false` 只是降级，不会报错。**但别声明你实现不了的能力**——启动器会真的去调。
 

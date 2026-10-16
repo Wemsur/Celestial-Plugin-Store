@@ -45,6 +45,13 @@ declare module '@celestial/content-source' {
 		versions: boolean
 		/** Produce a fetchable file for a project/version. */
 		resolve_download: boolean
+		/**
+		 * Offer a *page* the launcher opens in a window, for content whose file
+		 * cannot be fetched directly — a site download behind a captcha, where the
+		 * user completes the download themselves. Implement `openDownload` when
+		 * this is true; the launcher captures the file and installs it.
+		 */
+		open_download: boolean
 		/** Given installed items, report whether newer versions exist. */
 		update_check: boolean
 	}
@@ -258,6 +265,13 @@ declare module '@celestial/content-source' {
 		body?: string
 		gallery?: { url: string; title?: string }[]
 		license?: string
+		/**
+		 * The project's own outbound links. A link to another catalogue's page
+		 * (a CurseForge or Modrinth URL) is recognized by the launcher, which
+		 * turns it into a jump to that source's own project page when the source
+		 * is installed — so a catalogue that only *links* to where the content
+		 * really lives still gets the reader there in one click.
+		 */
 		links?: { label: string; url: string }[]
 		versions?: ContentVersion[]
 	}
@@ -313,6 +327,26 @@ declare module '@celestial/content-source' {
 			versionId?: string,
 			fileId?: string,
 		): Promise<DownloadDescriptor>
+		/**
+		 * The page the launcher should open in a window so the user can fetch the
+		 * file themselves — for content behind a captcha or a sign-in that only a
+		 * browser can pass. Implement it when your manifest sets `open_download`.
+		 *
+		 * The page's host must be one you declared in `hosts`; the launcher refuses
+		 * any other before opening the window. What the user downloads there is
+		 * captured by the launcher and installed, so the file never passes through
+		 * your source. `fileName` only names the staged download.
+		 *
+		 * `contentType` is passed because a source may serve several types and only
+		 * some have a download page — throw for the ones that do not, and the
+		 * launcher falls back to whatever else it can offer.
+		 */
+		openDownload?(
+			id: string,
+			contentType: ContentType,
+			versionId?: string,
+			fileId?: string,
+		): Promise<{ url: string; fileName?: string }>
 		checkUpdate?(items: UpdateQueryItem[]): Promise<UpdateResult[]>
 		/**
 		 * The sidebar filter groups you offer, per content type. The selections

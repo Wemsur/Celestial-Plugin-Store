@@ -16,6 +16,7 @@
 		"detail": true,
 		"versions": true,
 		"resolve_download": true,
+		"open_download": false,
 		"update_check": false
 	},
 	"hosts": ["example.com"],
