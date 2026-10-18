@@ -50,6 +50,24 @@
       "tags": [
         "官方"
       ]
+    },
+    {
+      "id": "github",
+      "name": "GitHub Releases",
+      "description": "把 GitHub 仓库的 Release 当作可安装内容。GitHub 没有可浏览的内容目录，所以条目由你手动添加：填仓库地址，再决定从 Release 里挑哪个文件。",
+      "author": "Celestial",
+      "github": "Wemsur/celestial-content-github",
+      "repo": "https://github.com/Wemsur/celestial-content-github",
+      "download": "https://github.com/Wemsur/celestial-content-github/releases/latest/download/github.zip",
+      "contentTypes": [
+        "mod",
+        "resourcepack",
+        "shader",
+        "datapack"
+      ],
+      "tags": [
+        "官方"
+      ]
     }
   ]
 }
