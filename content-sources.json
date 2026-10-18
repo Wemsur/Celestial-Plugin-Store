@@ -16,6 +16,40 @@
       "tags": [
         "官方"
       ]
+    },
+    {
+      "id": "curseforge",
+      "name": "CurseForge",
+      "description": "CurseForge 的模组、光影、资源包与整合包。需要 API Key 才能使用，搜索与安装走 CurseForge 官方 API，文件从 CurseForge CDN 下载。",
+      "author": "Celestial",
+      "github": "Wemsur/celestial-content-curseforge",
+      "repo": "https://github.com/Wemsur/celestial-content-curseforge",
+      "download": "https://github.com/Wemsur/celestial-content-curseforge/releases/latest/download/curseforge.zip",
+      "contentTypes": [
+        "mod",
+        "modpack",
+        "resourcepack",
+        "shader",
+        "datapack"
+      ],
+      "tags": [
+        "官方"
+      ]
+    },
+    {
+      "id": "pixelmap",
+      "name": "像素茶艺地图站",
+      "description": "浏览并下载像素茶艺地图站（goto.pixelmap.cc）的 Minecraft 地图。下载的内容按「世界」安装，解压进所选实例的 saves，且永远不会覆盖已有存档。",
+      "author": "Celestial",
+      "github": "Wemsur/celestial-content-pixelmap",
+      "repo": "https://github.com/Wemsur/celestial-content-pixelmap",
+      "download": "https://github.com/Wemsur/celestial-content-pixelmap/releases/latest/download/pixelmap.zip",
+      "contentTypes": [
+        "world"
+      ],
+      "tags": [
+        "官方"
+      ]
     }
   ]
 }
